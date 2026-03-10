@@ -29,6 +29,7 @@ from app.line_handlers.messages import (
     MSG_MONTHLY_SUMMARY_HEADER,
     MSG_NO_DRAFT,
     MSG_NO_EXPENSES,
+    MSG_NO_EXPENSES_THIS_MONTH,
     MSG_NOT_FOUND,
     MSG_REGISTRATION_DONE,
     MSG_REQUEST_FULL_NAME,
@@ -293,7 +294,11 @@ def _handle_monthly(line_bot_api, event, user, db: Session) -> None:
     now = datetime.now()
     items, total = get_monthly_summary_by_user(db, user.id, now.year, now.month)
     if not items:
-        _reply_text(line_bot_api, event, MSG_NO_EXPENSES)
+        _reply_text(
+            line_bot_api,
+            event,
+            MSG_NO_EXPENSES_THIS_MONTH.format(year=now.year, month=now.month),
+        )
         return
     msg = MSG_MONTHLY_SUMMARY_HEADER.format(year=now.year, month=now.month, total=total)
     for e in items:

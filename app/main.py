@@ -53,6 +53,7 @@ async def health():
 
 
 @app.post("/webhook")
+@app.post("/webhook/")  # 末尾スラッシュでも受け付ける（LINE の 405 を防ぐ）
 async def webhook(request: Request, db: Session = Depends(get_db)):
     """
     LINE Platform から呼ばれる Webhook エンドポイント。

@@ -5,6 +5,8 @@ Googleスプレッドシートへの書き込み。
 ・利用者別シート
 出力時の利用者名は full_name_kanji を使用。
 """
+import json
+import logging
 import os
 from datetime import date
 from typing import List, Optional
@@ -16,20 +18,42 @@ from app.config import get_settings
 from app.db.models import Expense, User
 from app.services.expense_parser import get_trip_type_display
 
+logger = logging.getLogger(__name__)
+
 
 def _get_client():
-    """gspread の認証クライアント。サービスアカウントJSONパスを参照。"""
+    """gspread の認証クライアント。環境変数 JSON またはサービスアカウントファイルを参照。"""
     import gspread
     from google.oauth2.service_account import Credentials
 
     settings = get_settings()
-    path = settings.google_credentials_json_path or os.environ.get("GOOGLE_CREDENTIALS_JSON_PATH")
-    if not path or not os.path.isfile(path):
-        return None
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
     ]
+
+    # 1) 環境変数 GOOGLE_CREDENTIALS_JSON に JSON 文字列が入っている場合（Render 等でファイルを置けないとき）
+    raw_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+    if raw_json:
+        try:
+            info = json.loads(raw_json)
+            creds = Credentials.from_service_account_info(info, scopes=scopes)
+            return gspread.authorize(creds)
+        except Exception as e:
+            logger.warning("スプレッドシート: GOOGLE_CREDENTIALS_JSON の解析に失敗しました: %s", e)
+            return None
+
+    # 2) ファイルパスで指定されている場合（ローカルや Secret File 利用時）
+    path = settings.google_credentials_json_path or os.environ.get("GOOGLE_CREDENTIALS_JSON_PATH")
+    if not path:
+        logger.info(
+            "スプレッドシート: 認証が未設定です。"
+            " GOOGLE_CREDENTIALS_JSON（JSON文字列）または GOOGLE_CREDENTIALS_JSON_PATH（ファイルパス）を設定してください。"
+        )
+        return None
+    if not os.path.isfile(path):
+        logger.warning("スプレッドシート: 認証ファイルが見つかりません: %s", path)
+        return None
     creds = Credentials.from_service_account_file(path, scopes=scopes)
     return gspread.authorize(creds)
 
@@ -42,6 +66,7 @@ def _get_spreadsheet():
     settings = get_settings()
     sheet_id = settings.google_spreadsheet_id or os.environ.get("GOOGLE_SPREADSHEET_ID")
     if not sheet_id:
+        logger.info("スプレッドシート: GOOGLE_SPREADSHEET_ID が未設定です。")
         return None
     return client.open_by_key(sheet_id)
 
