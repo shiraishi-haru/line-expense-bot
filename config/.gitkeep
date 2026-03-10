@@ -1,0 +1,2 @@
+# このフォルダに credential.json（Google サービスアカウントのキー）を置きます。
+# config/ 内の credentials*.json は .gitignore で無視されます。

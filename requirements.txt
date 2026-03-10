@@ -1,0 +1,32 @@
+# LINE交通費精算Bot - Dependencies
+# Python 3.10+ 推奨
+
+# Web Framework
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+
+# LINE Messaging API
+line-bot-sdk==3.4.0
+
+# Database (PostgreSQL / SQLite)
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
+
+# Google Sheets
+gspread==6.0.0
+google-auth>=2.27.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
+
+# Environment & Config
+python-dotenv==1.0.1
+pydantic-settings==2.1.0
+
+# HTTP Client
+httpx==0.26.0
+
+# Date handling
+python-dateutil==2.8.2
+
+# Regex for natural language parsing (stdlib re で足りるが明示)
+# (標準ライブラリのみ使用)

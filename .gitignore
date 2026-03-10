@@ -1,0 +1,36 @@
+# 環境・秘密情報
+.env
+*.env.local
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# DB（ローカルで使うSQLite）
+*.db
+*.sqlite3
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 認証情報（誤ってコミットしないように）
+*credentials*.json
+config/credential.json
+!requirements.txt
