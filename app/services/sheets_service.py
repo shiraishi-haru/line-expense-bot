@@ -44,6 +44,7 @@ def _get_client():
             return None
 
     # 2) ファイルパスで指定されている場合（ローカルや Secret File 利用時）
+    #    ※GOOGLE_CREDENTIALS_JSON_PATH に JSON 文字列を入れた場合もここで受け付ける
     path = settings.google_credentials_json_path or os.environ.get("GOOGLE_CREDENTIALS_JSON_PATH")
     if not path:
         logger.info(
@@ -51,8 +52,18 @@ def _get_client():
             " GOOGLE_CREDENTIALS_JSON（JSON文字列）または GOOGLE_CREDENTIALS_JSON_PATH（ファイルパス）を設定してください。"
         )
         return None
+    path = path.strip()
+    # GOOGLE_CREDENTIALS_JSON_PATH に JSON を直接貼った場合（Render でよくある）は JSON として扱う
+    if path.startswith("{"):
+        try:
+            info = json.loads(path)
+            creds = Credentials.from_service_account_info(info, scopes=scopes)
+            return gspread.authorize(creds)
+        except Exception as e:
+            logger.warning("スプレッドシート: GOOGLE_CREDENTIALS_JSON_PATH の JSON 解析に失敗しました: %s", e)
+            return None
     if not os.path.isfile(path):
-        logger.warning("スプレッドシート: 認証ファイルが見つかりません: %s", path)
+        logger.warning("スプレッドシート: 認証ファイルが見つかりません: %s", path[:80] + "..." if len(path) > 80 else path)
         return None
     creds = Credentials.from_service_account_file(path, scopes=scopes)
     return gspread.authorize(creds)
