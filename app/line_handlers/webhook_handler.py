@@ -198,8 +198,8 @@ def _handle_text(line_bot_api, event, text: str, db: Session) -> None:
                         )
                         try:
                             sync_all_expenses(db)
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.exception("スプレッドシート同期に失敗しました（修正後）: %s", e)
                     else:
                         _reply_text(line_bot_api, event, MSG_EDIT_FAIL)
                 else:
@@ -224,9 +224,11 @@ def _handle_text(line_bot_api, event, text: str, db: Session) -> None:
         create_expense(db, user.id, parsed)
         # 交通費登録のたびにスプシへ同期（設定されていれば）
         try:
-            sync_all_expenses(db)
-        except Exception:
-            pass
+            ok = sync_all_expenses(db)
+            if not ok:
+                logger.info("スプレッドシート: 同期をスキップしました（認証またはスプレッドシートIDが未設定の可能性）")
+        except Exception as e:
+            logger.exception("スプレッドシート同期に失敗しました: %s", e)
         date_str = parsed.date.strftime("%m/%d") if hasattr(parsed.date, "strftime") else str(parsed.date)
         trip_d = get_trip_type_display(parsed.trip_type)
         trip_s = (trip_d + " ") if trip_d else ""
@@ -333,8 +335,8 @@ def _handle_complete(line_bot_api, event, user, db: Session) -> None:
         sync_monthly_submitter_summary(db, now.year, now.month)
         sync_submitter_summary(db)
         sync_user_sheet(db, user)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.exception("スプレッドシート同期に失敗しました（完了時）: %s", e)
     # 管理者へ通知（LINEの user ID は "U" で始まる33文字の文字列。.env には「マイID」で取得した値をそのまま設定）
     from app.config import get_settings
     settings = get_settings()

@@ -128,6 +128,7 @@ def sync_all_expenses(db: Session) -> bool:
         rows.append(_row_expense(e, name))
     if rows:
         sheet.append_rows(rows, value_input_option="USER_ENTERED")
+        logger.info("スプレッドシート: 全履歴シートに %d 件を書き込みました", len(rows))
     return True
 
 
